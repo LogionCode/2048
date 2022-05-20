@@ -1,28 +1,30 @@
 ﻿using System;
+using System.Threading;
 
 namespace _2048
 {
     class Table
     {
-        static Random random = new Random();
-        Cell[] cells;
+        static readonly Random random = new Random();
+        readonly Cell[] cells;
+        int actions = 0;
 
         public Table()
         {
             cells = new Cell[16];
+        }
+
+        public void initialize() // refresh tiles
+        {
             for (int index = 0; index < 16; index++)
                 cells[index] = new Cell();
 
+            actions = 0;
             spawn(2);
+            show();
         }
-        public bool isFull()
-        {
-            for (int i = 0; i < 14; i++)
-                if (cells[i].isEmpty())
-                    return false;
-            return true;
-        }
-        public void show()
+
+        public void show() // toDO: include graphics and move from console to window
         {
             Console.Clear();
             for (int row = 0; row < 4; row++)
@@ -31,43 +33,69 @@ namespace _2048
                     Console.Write("{0} ", cells[row * 4 + col].toString());
                 Console.WriteLine();
             }
+            Console.WriteLine("Actions performed: {0}", actions);
+
         }
 
-        public void move(int x, int y)
+        public bool move(int x, int y) // returns whether an action was made
         {
-            if (isFull())
-                return;
+            if (isFull() && !canMove()) // if no tiles can move it's not an action
+                return false;
 
             int moves = x != 0 ? moveX(x) : moveY(y);
 
-            if(moves != 0) // if no tiles can move it's not a action
-                spawn(1);
-            freeMovement();
+            if (moves == 0) // if no tiles can move it's not an action
+                return false;
+
+            spawn(1);
+            actions++;
+            return true; // action was performed
         }
 
-        void spawn(int x)
+        public bool hasEnded() // check if there is no possible move to be made
+        {
+            if (canMove())
+                return false;
+
+            int score = 0;
+            for (int i = 0; i < 16; i++)
+                score += cells[i].getValue();
+
+            Console.WriteLine("Game has ended!");
+            Console.WriteLine("Your score is: {0}", score);
+            Console.Read();
+            return true;
+        }
+
+        public bool isFull()
+        {
+            for (int i = 0; i < 14; i++)
+                if (cells[i].isEmpty())
+                    return false;
+            return true;
+        }
+
+        void spawn(int x) // spawns x tiles with value 2/4 on table if possible
         {
             if (isFull()) // if called on full table it won't get stuck
                 return;
 
-            int amount = 0, lastIndex = -1, index;
+            int index, lastIndex = -1, amount = 0;
             while (amount < x)
             {
                 index = random.Next(16);
                 if (lastIndex == index || !cells[index].isEmpty())
                     continue;
 
-                cells[index].addValue(2);
+                if (random.Next(10) < 2) // 1/5 chance to be 4
+                    cells[index].addValue(4);
+                else
+                    cells[index].addValue(2);
                 lastIndex = index; amount++;
             }
         }
 
-        void freeMovement()
-        {
-            for (int i = 0; i < 14; i++)
-                cells[i].freeMove();
-        }
-        int moveX(int x)
+        int moveX(int x) // move horizontally
         {
             bool isDone = false;
             int moves = 0;
@@ -82,24 +110,21 @@ namespace _2048
                         for (int col = 1; col < 4; col++)
                             if (cells[row * 4 + col].moveTo(cells[row * 4 + col - 1]))
                             {
-                                isDone = false;
-                                moves++;
+                                isDone = false; moves++;
                             }
                     }
                     else
                         for (int col = 2; col >= 0; col--)
                             if (cells[row * 4 + col].moveTo(cells[row * 4 + col + 1]))
                             {
-                                isDone = false;
-                                moves++;
+                                isDone = false; moves++;
                             }
                 }
             }
             return moves;
-
         }
 
-        int moveY(int y)
+        int moveY(int y) // move vertically
         {
             bool isDone = false;
             int moves = 0;
@@ -114,8 +139,7 @@ namespace _2048
                         for (int row = 1; row < 4; row++)
                             if (cells[row * 4 + col].moveTo(cells[(row - 1) * 4 + col]))
                             {
-                                isDone = false;
-                                moves++;
+                                isDone = false; moves++;
                             }
 
                     }
@@ -123,12 +147,27 @@ namespace _2048
                         for (int row = 2; row >= 0; row--)
                             if (cells[row * 4 + col].moveTo(cells[(row + 1) * 4 + col]))
                             {
-                                isDone = false;
-                                moves++;
+                                isDone = false; moves++;
                             }
                 }
             }
             return moves;
+        }
+
+        bool canMove() // check if any move can be made
+        {
+            for (int i = 0; i < 14; i++)
+            {
+                if (i - 4 >= 0 && cells[i].canMove(cells[i - 1])) // tile top of this 
+                    return true;
+                else if (i + 4 < 14 && cells[i].canMove(cells[i + 4])) // tile below this
+                    return true;
+                else if (i - 1 >= 0 && cells[i].canMove(cells[i - 1])) // tile left of this
+                    return true;
+                else if (i + 1 < 14 && cells[i].canMove(cells[i + 1])) // tile right of this
+                    return true;
+            }
+            return false; // can't move to any tile
         }
     }
 }
@@ -140,6 +179,6 @@ namespace _2048
  * - action is a move where at least 1 tile moves
  * - tile can move to empty tile
  * - tile can sum up if they are the same value
- * - tile can only sum up once per action
- * - game is lost when table is full // toDo when table is full but an action can be made it's not yet lost
+ * - tile can only sum up once per action (REMOVED - more fun to add few at once)
+ * - game is lost when table is full and action can't be made // DONE - when table is full but an action can be made it's not yet lost
  */

@@ -4,34 +4,41 @@ namespace _2048
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Table table = new Table();
-            while (!table.isFull())
+            table.initialize();
+
+            while (!table.hasEnded())
             {
-                string dir = "";
                 int x = 0; int y = 0;
 
                 table.show();
 
-                while (dir.Length == 0)
+                char dir = ' ';
+                while (dir == ' ')
                 {
-                    dir = Console.ReadLine();
-                    if (dir == "a")
+                    dir = Console.ReadKey(true).KeyChar; // toDo: do it better 
+                    if (dir == 'a')
                         x--;
-                    else if (dir == "d")
+                    else if (dir == 'd')
                         x++;
-                    else if (dir == "w")
+                    else if (dir == 'w')
                         y--;
-                    else if (dir == "s")
+                    else if (dir == 's')
                         y++;
+                    else if (dir == 'r')
+                    {
+                        table.initialize();
+                        dir = ' ';
+                    }
                     else
-                        dir = "";
+                        dir = ' ';
                 }
-
                 table.move(x, y);
             }
-            Console.Read();
+
+
         }
     }
 }
