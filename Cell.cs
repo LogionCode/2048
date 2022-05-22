@@ -18,11 +18,12 @@
 
         public bool canMove(Cell target) // checks if this tile can move to target
         {
-            if (value == 0) // tiles that are empty
+            if (value == 0) // tiles that are empty can't move
                 return false;
 
             if (!target.isEmpty() && target.getValue() != value) // can't sum up to tiles with different value
                 return false;
+
             return true;
         }
 

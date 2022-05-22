@@ -1,16 +1,17 @@
 ﻿using System;
-using System.Threading;
 
 namespace _2048
 {
     class Table
     {
         static readonly Random random = new Random();
-        readonly Cell[] cells;
+        Scoreboard scoreboard;
+        Cell[] cells;
         int actions = 0;
 
         public Table()
         {
+            scoreboard = new Scoreboard();
             cells = new Cell[16];
         }
 
@@ -22,6 +23,9 @@ namespace _2048
             actions = 0;
             spawn(2);
             show();
+
+            while (!hasEnded())
+                tick();
         }
 
         public void show() // toDO: include graphics and move from console to window
@@ -37,14 +41,38 @@ namespace _2048
 
         }
 
+        public void tick()
+        {
+            short x = 0; int y = 0;
+            char dir = ' ';
+
+            show();
+
+            while (dir == ' ')
+            {
+                dir = Console.ReadKey(true).KeyChar; // toDo: do it better 
+                if (dir == 'a')
+                    x--;
+                else if (dir == 'd')
+                    x++;
+                else if (dir == 'w')
+                    y--;
+                else if (dir == 's')
+                    y++;
+                else
+                    dir = ' ';
+            }
+            move(x, y);
+
+        }
         public bool move(int x, int y) // returns whether an action was made
         {
-            if (isFull() && !canMove()) // if no tiles can move it's not an action
+            if (hasEnded()) // if no tiles can move it's game over
                 return false;
 
             int moves = x != 0 ? moveX(x) : moveY(y);
 
-            if (moves == 0) // if no tiles can move it's not an action
+            if (moves == 0) // if no tiles moved it's not an action
                 return false;
 
             spawn(1);
@@ -52,18 +80,31 @@ namespace _2048
             return true; // action was performed
         }
 
-        public bool hasEnded() // check if there is no possible move to be made
+        public bool hasEnded() // check if the game should end
         {
-            if (canMove())
-                return false;
+            //if (!isFull() || canMove()) // if there is a move to be made it's not
+                //return false;
 
             int score = 0;
             for (int i = 0; i < 16; i++)
                 score += cells[i].getValue();
 
+            show();
+
             Console.WriteLine("Game has ended!");
-            Console.WriteLine("Your score is: {0}", score);
-            Console.Read();
+            Console.WriteLine("Please give your name");
+
+            string name = Console.ReadLine();
+            scoreboard.addScore(new Record(name, score, actions));
+
+            Record[] scores = scoreboard.readSorted();
+
+            Console.WriteLine("\nScoreboard:"); // show 5 best scores
+            for(int i = 0; i < 5 && i < scores.Length; i++)
+                Console.WriteLine('\t' + scores[i].toString());
+
+            Console.WriteLine("Press Enter to close");
+            Console.Read(); // wait so scoreboard can be seen
             return true;
         }
 
@@ -158,7 +199,7 @@ namespace _2048
         {
             for (int i = 0; i < 14; i++)
             {
-                if (i - 4 >= 0 && cells[i].canMove(cells[i - 1])) // tile top of this 
+                if (i - 4 >= 0 && cells[i].canMove(cells[i - 4])) // tile top of this 
                     return true;
                 else if (i + 4 < 14 && cells[i].canMove(cells[i + 4])) // tile below this
                     return true;
