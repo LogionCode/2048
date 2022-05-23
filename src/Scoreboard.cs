@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 
 namespace _2048
 {
@@ -38,7 +38,7 @@ namespace _2048
 
 
             if (!Directory.Exists(filePath + savedGames + gameFolder))
-            Directory.CreateDirectory(filePath + savedGames + gameFolder);
+                Directory.CreateDirectory(filePath + savedGames + gameFolder);
 
             File.WriteAllText(filePath + savedGames + gameFolder + fileName, toJson(scores));
         }

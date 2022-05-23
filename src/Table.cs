@@ -25,7 +25,7 @@ namespace _2048
             show();
 
             while (!hasEnded())
-                tick();
+                update();
         }
 
         public void show() // toDO: include graphics and move from console to window
@@ -41,7 +41,7 @@ namespace _2048
 
         }
 
-        public void tick()
+        public void update()
         {
             short x = 0; int y = 0;
             char dir = ' ';
@@ -62,28 +62,72 @@ namespace _2048
                 else
                     dir = ' ';
             }
-            move(x, y);
+            if (move(x, y))
+                spawn(1);
 
         }
-        public bool move(int x, int y) // returns whether an action was made
+        public bool move(int x, int y) // returns if move was made
         {
             if (hasEnded()) // if no tiles can move it's game over
                 return false;
 
-            int moves = x != 0 ? moveX(x) : moveY(y);
+            int moves = 0;
+            bool isDone = false;
+
+            while (!isDone)
+            {
+                isDone = true;
+
+                if (x != 0)
+                    for (int row = 0; row < 4; row++)
+                    {
+                        if (x < 0)
+                        {
+                            for (int col = 1; col < 4; col++)
+                                if (cells[row * 4 + col].moveTo(cells[row * 4 + col - 1]))
+                                {
+                                    isDone = false; moves++;
+                                }
+                        }
+                        else
+                            for (int col = 2; col >= 0; col--)
+                                if (cells[row * 4 + col].moveTo(cells[row * 4 + col + 1]))
+                                {
+                                    isDone = false; moves++;
+                                }
+                    }
+                else
+                    for (int col = 0; col < 4; col++)
+                    {
+                        if (y < 0)
+                        {
+                            for (int row = 1; row < 4; row++)
+                                if (cells[row * 4 + col].moveTo(cells[(row - 1) * 4 + col]))
+                                {
+                                    isDone = false; moves++;
+                                }
+
+                        }
+                        else
+                            for (int row = 2; row >= 0; row--)
+                                if (cells[row * 4 + col].moveTo(cells[(row + 1) * 4 + col]))
+                                {
+                                    isDone = false; moves++;
+                                }
+                    }
+            }
 
             if (moves == 0) // if no tiles moved it's not an action
                 return false;
 
-            spawn(1);
             actions++;
             return true; // action was performed
         }
 
         public bool hasEnded() // check if the game should end
         {
-            //if (!isFull() || canMove()) // if there is a move to be made it's not
-                //return false;
+            if (!isFull() || canMove()) // if there is a move to be made it's not
+                return false;
 
             int score = 0;
             for (int i = 0; i < 16; i++)
@@ -100,7 +144,7 @@ namespace _2048
             Record[] scores = scoreboard.readSorted();
 
             Console.WriteLine("\nScoreboard:"); // show 5 best scores
-            for(int i = 0; i < 5 && i < scores.Length; i++)
+            for (int i = 0; i < 5 && i < scores.Length; i++)
                 Console.WriteLine('\t' + scores[i].toString());
 
             Console.WriteLine("Press Enter to close");
@@ -134,65 +178,6 @@ namespace _2048
                     cells[index].addValue(2);
                 lastIndex = index; amount++;
             }
-        }
-
-        int moveX(int x) // move horizontally
-        {
-            bool isDone = false;
-            int moves = 0;
-
-            while (!isDone)
-            {
-                isDone = true;
-                for (int row = 0; row < 4; row++)
-                {
-                    if (x < 0)
-                    {
-                        for (int col = 1; col < 4; col++)
-                            if (cells[row * 4 + col].moveTo(cells[row * 4 + col - 1]))
-                            {
-                                isDone = false; moves++;
-                            }
-                    }
-                    else
-                        for (int col = 2; col >= 0; col--)
-                            if (cells[row * 4 + col].moveTo(cells[row * 4 + col + 1]))
-                            {
-                                isDone = false; moves++;
-                            }
-                }
-            }
-            return moves;
-        }
-
-        int moveY(int y) // move vertically
-        {
-            bool isDone = false;
-            int moves = 0;
-
-            while (!isDone)
-            {
-                isDone = true;
-                for (int col = 0; col < 4; col++)
-                {
-                    if (y < 0)
-                    {
-                        for (int row = 1; row < 4; row++)
-                            if (cells[row * 4 + col].moveTo(cells[(row - 1) * 4 + col]))
-                            {
-                                isDone = false; moves++;
-                            }
-
-                    }
-                    else
-                        for (int row = 2; row >= 0; row--)
-                            if (cells[row * 4 + col].moveTo(cells[(row + 1) * 4 + col]))
-                            {
-                                isDone = false; moves++;
-                            }
-                }
-            }
-            return moves;
         }
 
         bool canMove() // check if any move can be made

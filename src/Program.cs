@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace _2048
+﻿namespace _2048
 {
     internal class Program
     {
